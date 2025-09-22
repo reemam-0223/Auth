@@ -1,22 +1,24 @@
 package com.bizdigitalit.Auth.model;
-
 import jakarta.persistence.*;
-
 import java.util.Set;
-
 @Entity
 @Table(name = "user")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String email;
     private String password;
+
+    @Column(name = "refresh_token", length = 500)
+    private String refreshToken;
 
     @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private Set<Role> roles;
 
+    // --- Getters & Setters ---
     public Long getId() {
         return id;
     }
@@ -47,5 +49,13 @@ public class User {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }
