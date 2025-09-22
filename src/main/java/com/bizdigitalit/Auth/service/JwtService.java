@@ -21,12 +21,14 @@ public class JwtService {
 
     private static String SECRET_KEY;
 
-    public JwtService(@Value("${jwt.secret}") String secretKey){
+    public JwtService(@Value("${jwt.secret}") String secretKey) {
         SECRET_KEY = secretKey;
     }
 
+    // ==========================
+    // Generate Access Token
+    // ==========================
     public String generateToken(UserDetails userDetails) {
-
         Map<String, Object> claims = new HashMap<>();
 
         claims.put("roles", userDetails.getAuthorities()
@@ -39,11 +41,34 @@ public class JwtService {
                 .claims(claims)
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis()+ 1000*60*60*24))
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24 hours
                 .signWith(getKey())
                 .compact();
     }
 
+    // ==========================
+    // Generate Refresh Token (7 days validity)
+    // ==========================
+    public String generateRefreshToken(UserDetails userDetails) {
+        return Jwts.builder()
+                .subject(userDetails.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 7)) // 7 days
+                .signWith(getKey())
+                .compact();
+    }
+
+    // ==========================
+    // Validate Refresh Token
+    // ==========================
+    public boolean isRefreshTokenValid(String token, UserDetails userDetails) {
+        final String username = extractUserName(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    // ==========================
+    // Helpers
+    // ==========================
     private SecretKey getKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -79,5 +104,4 @@ public class JwtService {
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
-
 }
